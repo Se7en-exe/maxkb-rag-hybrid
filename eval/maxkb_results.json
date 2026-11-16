@@ -1,0 +1,204 @@
+{
+ "agg": {
+  "embedding": 12,
+  "keywords": 12,
+  "blend": 11,
+  "rrf": 20
+ },
+ "n": 24,
+ "offdomain_reject": 1,
+ "rows": [
+  {
+   "q": "MaxKB 二次开发一周怎么排期",
+   "exp": "开源项目二次开发指南",
+   "rank_emb": 12,
+   "rank_kw": 9,
+   "rank_blend": 10,
+   "rank_rrf": 7
+  },
+  {
+   "q": "WeKnora 适不适合当简历项目",
+   "exp": "WeKnora体量评估",
+   "rank_emb": 2,
+   "rank_kw": 3,
+   "rank_blend": 2,
+   "rank_rrf": 2
+  },
+  {
+   "q": "代码检索工作台最小可讲版要几天",
+   "exp": "项目_代码检索工作台_开发清单",
+   "rank_emb": 13,
+   "rank_kw": 10,
+   "rank_blend": 10,
+   "rank_rrf": 6
+  },
+  {
+   "q": "打招呼第一句话怎么写",
+   "exp": "投递执行手册_打招呼与转化率",
+   "rank_emb": 12,
+   "rank_kw": 3,
+   "rank_blend": 9,
+   "rank_rrf": 2
+  },
+  {
+   "q": "广州有哪些 AI 应用开发岗位",
+   "exp": "BOSS直聘岗位清单_广州深圳",
+   "rank_emb": 2,
+   "rank_kw": 3,
+   "rank_blend": 2,
+   "rank_rrf": 2
+  },
+  {
+   "q": "AI 时代简历必须加哪三样东西",
+   "exp": "AI时代版说明",
+   "rank_emb": 1,
+   "rank_kw": 3,
+   "rank_blend": 2,
+   "rank_rrf": 1
+  },
+  {
+   "q": "简历优化服务值不值得买",
+   "exp": "简历优化服务值不值",
+   "rank_emb": 9,
+   "rank_kw": 8,
+   "rank_blend": 9,
+   "rank_rrf": 4
+  },
+  {
+   "q": "卓望的定向简历有什么要求",
+   "exp": "卓望_定向简历说明",
+   "rank_emb": 4,
+   "rank_kw": 4,
+   "rank_blend": 5,
+   "rank_rrf": 4
+  },
+  {
+   "q": "校园二手交易平台三周怎么排",
+   "exp": "项目二_3周开发清单",
+   "rank_emb": 12,
+   "rank_kw": 12,
+   "rank_blend": 13,
+   "rank_rrf": 9
+  },
+  {
+   "q": "网上真实的优秀简历长什么样",
+   "exp": "优秀简历参考_网上真实样本",
+   "rank_emb": 2,
+   "rank_kw": 3,
+   "rank_blend": 2,
+   "rank_rrf": 2
+  },
+  {
+   "q": "简历参考包里有哪些材料",
+   "exp": "简历参考包",
+   "rank_emb": 2,
+   "rank_kw": 1,
+   "rank_blend": 2,
+   "rank_rrf": 1
+  },
+  {
+   "q": "AI 提示词能卖哪些场景",
+   "exp": "AI提示词实战库-21个场景",
+   "rank_emb": 1,
+   "rank_kw": 1,
+   "rank_blend": 1,
+   "rank_rrf": 1
+  },
+  {
+   "q": "上架文案怎么写",
+   "exp": "上架文案",
+   "rank_emb": 1,
+   "rank_kw": 2,
+   "rank_blend": 2,
+   "rank_rrf": 1
+  },
+  {
+   "q": "四类指标的口径怎么定义",
+   "exp": "AI时代版说明",
+   "rank_emb": 2,
+   "rank_kw": 1,
+   "rank_blend": 1,
+   "rank_rrf": 1
+  },
+  {
+   "q": "三个开源方向分别选哪个项目",
+   "exp": "开源项目二次开发指南",
+   "rank_emb": 5,
+   "rank_kw": 6,
+   "rank_blend": 8,
+   "rank_rrf": 3
+  },
+  {
+   "q": "改了别人的代码怎么证明是我改的",
+   "exp": "开源项目二次开发指南",
+   "rank_emb": 8,
+   "rank_kw": 7,
+   "rank_blend": 8,
+   "rank_rrf": 4
+  },
+  {
+   "q": "项目二推荐用什么技术栈",
+   "exp": "开源项目二次开发指南",
+   "rank_emb": 11,
+   "rank_kw": 6,
+   "rank_blend": 8,
+   "rank_rrf": 5
+  },
+  {
+   "q": "简历上哪些项目会被认为烂大街",
+   "exp": "开源项目二次开发指南",
+   "rank_emb": 7,
+   "rank_kw": 6,
+   "rank_blend": 7,
+   "rank_rrf": 5
+  },
+  {
+   "q": "测试开发岗位的 JD 要求是什么",
+   "exp": "BOSS直聘岗位清单_广州深圳",
+   "rank_emb": 2,
+   "rank_kw": 2,
+   "rank_blend": 2,
+   "rank_rrf": 2
+  },
+  {
+   "q": "RAG 项目要准备多少条评测问题",
+   "exp": "开源项目二次开发指南",
+   "rank_emb": 7,
+   "rank_kw": 6,
+   "rank_blend": 7,
+   "rank_rrf": 5
+  },
+  {
+   "q": "简历里的百分比指标怎么定才可信",
+   "exp": "AI时代版说明",
+   "rank_emb": 2,
+   "rank_kw": 1,
+   "rank_blend": 1,
+   "rank_rrf": 1
+  },
+  {
+   "q": "投递转化率低是什么原因",
+   "exp": "投递执行手册_打招呼与转化率",
+   "rank_emb": 12,
+   "rank_kw": 6,
+   "rank_blend": 11,
+   "rank_rrf": 4
+  },
+  {
+   "q": "三条改造方向里哪条最适合一周做完",
+   "exp": "开源项目二次开发指南",
+   "rank_emb": 7,
+   "rank_kw": 11,
+   "rank_blend": 9,
+   "rank_rrf": 3
+  },
+  {
+   "q": "全栈版简历里专业技能写了什么",
+   "exp": "个人简历_全栈版",
+   "rank_emb": 99,
+   "rank_kw": 99,
+   "rank_blend": 99,
+   "rank_rrf": 99
+  }
+ ]
+}

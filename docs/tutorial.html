@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG 混合检索 · 从零讲透</title>
+<style>
+:root{
+  --bg:#0a0e13; --panel:#111a24; --panel2:#0d141c; --line:#1e2a38;
+  --txt:#d8e2ee; --dim:#8b9bad; --accent:#3ddc97; --accent2:#57b6ff;
+  --warn:#ffb454; --bad:#ff6b6b; --mono:ui-monospace,"Cascadia Code",Consolas,"Courier New",monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0; background:var(--bg); color:var(--txt);
+  font:16px/1.85 -apple-system,"Segoe UI","Microsoft YaHei",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+#progress{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:99}
+aside{
+  position:fixed;inset:0 auto 0 0;width:256px;padding:26px 18px 40px;overflow-y:auto;
+  background:linear-gradient(180deg,#0b1219,#0a0e13);border-right:1px solid var(--line);z-index:50;
+}
+aside .brand{font-weight:700;font-size:15px;letter-spacing:.5px;margin-bottom:4px}
+aside .brand span{color:var(--accent)}
+aside .sub{font-size:12px;color:var(--dim);margin-bottom:22px}
+aside a{
+  display:block;padding:7px 10px;margin:1px 0;border-radius:7px;
+  color:var(--dim);text-decoration:none;font-size:13.5px;border-left:2px solid transparent;
+}
+aside a:hover{color:var(--txt);background:#111a24}
+aside a.on{color:var(--accent);background:#0f1b1a;border-left-color:var(--accent)}
+aside a i{font-style:normal;opacity:.5;margin-right:7px;font-family:var(--mono);font-size:11px}
+main{margin-left:256px;padding:0 44px 120px;max-width:1080px}
+.hero{padding:64px 0 34px;border-bottom:1px solid var(--line)}
+.hero h1{font-size:34px;line-height:1.35;margin:0 0 14px;letter-spacing:-.5px}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{color:var(--dim);margin:0 0 20px;font-size:15px}
+.tags{display:flex;flex-wrap:wrap;gap:8px}
+.tag{font-size:12px;padding:4px 11px;border:1px solid var(--line);border-radius:20px;color:var(--dim);background:var(--panel2)}
+.tag.k{color:var(--accent);border-color:#1d4a3a}
+section{padding:44px 0 8px;border-bottom:1px solid #121b25}
+h2{font-size:23px;margin:0 0 6px;letter-spacing:-.2px}
+h2 .n{font-family:var(--mono);font-size:13px;color:var(--accent);opacity:.8;margin-right:10px}
+h3{font-size:17px;margin:30px 0 8px;color:#eaf2fa}
+p{margin:12px 0}
+strong{color:#fff}
+em.hl{font-style:normal;color:var(--warn);font-weight:600}
+code{
+  font-family:var(--mono);font-size:.88em;background:#18232f;padding:1.5px 6px;
+  border-radius:5px;color:#8fe3c0;border:1px solid #22303f;
+}
+pre.code{
+  position:relative;background:#080d12;border:1px solid var(--line);border-radius:10px;
+  padding:18px 18px;overflow-x:auto;font-family:var(--mono);font-size:13px;line-height:1.75;
+  color:#c9d6e4;margin:16px 0;
+}
+pre.code code{background:none;border:0;padding:0;color:inherit;font-size:13px}
+pre.code .c{color:#5c7285}
+pre.code .bad{color:var(--bad);font-weight:600}
+pre.code .hot{color:var(--warn)}
+pre.code .dim{color:#7f93a6}
+.copy{
+  position:absolute;top:9px;right:9px;font-size:11px;padding:4px 9px;border-radius:6px;
+  background:#16222e;color:var(--dim);border:1px solid var(--line);cursor:pointer;font-family:inherit;
+}
+.copy:hover{color:var(--accent);border-color:#1d4a3a}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #17222e;vertical-align:top}
+th{color:var(--dim);font-weight:600;font-size:12.5px;letter-spacing:.4px;text-transform:uppercase;background:#0d141c}
+td.num{font-family:var(--mono);white-space:nowrap}
+tr:hover td{background:#0e161f}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin:18px 0}
+.card.warn{border-color:#4a3a1d;background:#171308}
+.card.bad{border-color:#4a2020;background:#170f0f}
+.card.good{border-color:#1d4a3a;background:#0c1714}
+.card h4{margin:0 0 8px;font-size:14.5px;color:#fff}
+.quote{border-left:3px solid var(--accent);padding:2px 0 2px 16px;margin:18px 0;color:#c3d2e0}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:20px 0}
+.node{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:9px 13px;font-size:13px}
+.node b{color:var(--accent2);font-weight:600}
+.node.hit{border-color:#1d4a3a}
+.node.hit b{color:var(--accent)}
+.arw{color:#3a4a5c;font-family:var(--mono)}
+.bars{margin:16px 0}
+.bar-row{display:grid;grid-template-columns:190px 1fr 92px;gap:12px;align-items:center;margin:9px 0;font-size:13.5px}
+.bar-track{height:22px;background:#0b1420;border-radius:6px;overflow:hidden;border:1px solid #17222e}
+.bar-fill{height:100%;border-radius:5px 0 0 5px;transition:width .5s ease}
+.bar-row .v{font-family:var(--mono);font-size:12.5px;color:var(--dim);text-align:right}
+.bar-row.best .lbl{color:var(--accent);font-weight:600}
+.bar-row.best .v{color:var(--accent)}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:8px 16px;font-size:14px;margin:12px 0}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;font-family:var(--mono);font-size:13px;color:#c9d6e4;word-break:break-all}
+details{border:1px solid var(--line);border-radius:9px;padding:0;margin:10px 0;background:var(--panel2)}
+details[open]{background:var(--panel)}
+summary{cursor:pointer;padding:12px 16px;font-size:14.5px;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:before{content:"▸";color:var(--accent);margin-right:9px;display:inline-block;transition:transform .2s}
+details[open] summary:before{transform:rotate(90deg)}
+details .body{padding:0 18px 14px 34px;color:#c3d2e0;font-size:14.5px}
+.calc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+.calc .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.calc label{display:block;font-size:12.5px;color:var(--dim);margin-bottom:5px}
+.calc input[type=number]{width:100%;background:#0a1219;border:1px solid var(--line);color:var(--txt);padding:8px 10px;border-radius:7px;font-family:var(--mono);font-size:14px}
+.calc input[type=range]{width:100%;accent-color:var(--accent)}
+.docline{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px dashed #1c2938;font-size:13.5px}
+.docline .s{font-family:var(--mono);color:var(--warn)}
+.win{font-size:11px;padding:2px 8px;border-radius:20px;background:#12402f;color:var(--accent);margin-left:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+.grid2 .card{margin:0}
+.footer{padding:40px 0 0;color:var(--dim);font-size:13px}
+.searchbox{width:100%;background:#0a1219;border:1px solid var(--line);color:var(--txt);padding:11px 14px;border-radius:9px;font-size:14px;margin:14px 0}
+.searchbox:focus{outline:none;border-color:#1d4a3a}
+.gterm{display:grid;grid-template-columns:150px 1fr;gap:14px;padding:9px 0;border-bottom:1px solid #131d27;font-size:13.8px}
+.gterm b{color:var(--accent2);font-weight:600;font-family:var(--mono);font-size:12.8px}
+@media(max-width:980px){
+  aside{position:static;width:auto;border-right:0;border-bottom:1px solid var(--line)}
+  main{margin-left:0;padding:0 18px 90px}
+  .grid2,.calc .grid{grid-template-columns:1fr}
+  .bar-row{grid-template-columns:110px 1fr 74px;font-size:12px}
+}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+
+<aside>
+  <div class="brand">RAG <span>混合检索</span></div>
+  <div class="sub">文档知识库问答 · 从零讲透</div>
+  <a href="#s1"><i>01</i>一句话说清</a>
+  <a href="#s2"><i>02</i>为什么非要 RAG</a>
+  <a href="#s3"><i>03</i>系统部件 · 本机实况</a>
+  <a href="#s4"><i>04</i>文档怎么变成数字</a>
+  <a href="#s5"><i>05</i>两路检索瞎在哪</a>
+  <a href="#s6"><i>06</i>原版 SQL 逐句拆</a>
+  <a href="#s7"><i>07</i>RRF · 可手算</a>
+  <a href="#s8"><i>08</i>评测怎么做</a>
+  <a href="#s9"><i>09</i>踩过的六个坑</a>
+  <a href="#s10"><i>10</i>能力边界</a>
+  <a href="#s11"><i>11</i>术语卡 · 可搜索</a>
+  <a href="#s12"><i>12</i>60 秒讲述</a>
+  <a href="#s13"><i>13</i>自检题 · 10 道</a>
+</aside>
+
+<main>
+<header class="hero">
+  <h1>你的项目是一个<em>「开卷考试」</em>系统</h1>
+  <p>给它一批文档，你问一句，它先翻书找到最相关的几段，再照着这几页回答。翻书叫检索，答题叫生成，合起来叫 RAG。你只做了翻书那一半——而且是做准了的那一半。</p>
+  <div class="tags">
+    <span class="tag k">MaxKB v2.10.8</span>
+    <span class="tag k">PostgreSQL 17 + pgvector</span>
+    <span class="tag">Docker</span>
+    <span class="tag">本地 embedding · 768 维</span>
+    <span class="tag k">24 题自建标注集</span>
+    <span class="tag k">54.2% → 83.3%</span>
+  </div>
+</header>
+
+<section id="s1">
+  <h2><span class="n">01</span>一句话说清这个项目</h2>
+  <p>整篇文档没法检索——你问一句，它只能把整篇丢给你，等于没给。所以要<strong>切段</strong>、要给每段<strong>算一个语义坐标</strong>、要能在几千段里<strong>挑出最像的五段</strong>。你改的就是最后那步「挑」。</p>
+  <div class="card good">
+    <h4>面试定调的一句话</h4>
+    <p>别说「我做了个 AI 问答机器人」。要说：<strong>「我调的是检索，不是模型。」</strong>这一句定完，后面所有追问都落在你能接住的框里。</p>
+  </div>
+  <p>RAG 的效果上限，几乎完全由「翻书翻得准不准」决定。翻错页，再强的模型也只能照着错的页答，而且答得很自信。这就是检索调优值得做成一个项目的原因。</p>
+</section>
+
+<section id="s2">
+  <h2><span class="n">02</span>为什么非要 RAG，不能微调</h2>
+  <p>大模型两个天生的毛病：<strong>不知道你的私有文档</strong>；<strong>不知道就编</strong>——你问报销上限，它不会说不知道，它会给你一个听起来很合理的数字（这叫<em class="hl">幻觉</em>）。</p>
+  <table>
+    <tr><th>做法</th><th>本质</th><th>代价</th></tr>
+    <tr><td>微调 fine-tune</td><td>把文档「烧」进模型权重</td><td>贵、慢、文档一改就得重训、还容易把模型教傻</td></tr>
+    <tr><td><strong>RAG</strong></td><td>文档不动，回答时现场查</td><td>便宜、随时能改、能给出来源</td></tr>
+  </table>
+  <p>工业界默认选 RAG。打个比方：微调是考前把整本书背下来，RAG 是允许带书进考场。</p>
+</section>
+
+<section id="s3">
+  <h2><span class="n">03</span>系统由哪些部件组成</h2>
+  <div class="flow">
+    <div class="node"><b>文档</b> 38 个</div><span class="arw">→</span>
+    <div class="node"><b>MaxKB</b> 解析 / 切分</div><span class="arw">→</span>
+    <div class="node">353 <b>段</b></div><span class="arw">→</span>
+    <div class="node">embedding <b>768 维</b></div><span class="arw">→</span>
+    <div class="node hit"><b>pgvector</b> 693 条</div>
+  </div>
+  <div class="flow">
+    <div class="node">你的问题</div><span class="arw">→</span>
+    <div class="node">向量路 <b>语义</b></div><span class="arw">+</span>
+    <div class="node">关键词路 <b>字面</b></div><span class="arw">→</span>
+    <div class="node hit">融合排序 <b>Top-5</b></div><span class="arw">→</span>
+    <div class="node">大模型 <b>（本机未接）</b></div>
+  </div>
+  <h3>本机实况（自己验证用）</h3>
+  <dl class="kv">
+    <dt>地址</dt><dd>http://127.0.0.1:8080</dd>
+    <dt>账号</dt><dd>admin / &lt;你的密码&gt;</dd>
+    <dt>知识库</dt><dd>rrf-docs-v2 · 01a1db74-398d-7b60-94f2-15cd5d66894d</dd>
+    <dt>规模</dt><dd>38 文件 / 353 段 / 693 条向量</dd>
+    <dt>连库</dt><dd>docker exec -it maxkb psql -h 127.0.0.1 -U root -d maxkb</dd>
+    <dt>密码</dt><dd>容器环境变量 POSTGRES_PASSWORD（用户是 root，没有 postgres 角色）</dd>
+  </dl>
+  <div class="card warn"><h4>演示前先做一件事</h4><p>这台机器现在 <strong>Docker Desktop 没启动</strong>，容器是停的，8080 打不开。先启动 Docker Desktop，等鲸鱼图标变绿，再访问。</p></div>
+</section>
+
+<section id="s4">
+  <h2><span class="n">04</span>文档怎么变成「能查的东西」</h2>
+  <h3>4.1 切分 chunking</h3>
+  <table>
+    <tr><th>切法</th><th>后果</th></tr>
+    <tr><td>按固定字数硬切</td><td>一句话被切成两半，两半都检索不到</td></tr>
+    <tr><td>按段落 / 换行切</td><td>好一点，但长段落还是一大坨</td></tr>
+    <tr><td><strong>按标题层级下钻</strong></td><td>每段自带「它在哪一章哪一节」，命中率高</td></tr>
+  </table>
+  <div class="card bad"><h4>必须诚实的一点</h4><p>MaxKB 的智能分段<strong>本来就支持</strong>按 Markdown 标题逐级下钻（最多 6 级，每段上限 4096 字符）。所以「改造分块」不是你的功劳。你真正加的是：<strong>表格整表保留表头 + 每段带「文件名:行号」</strong>，让引用能定位回原文。</p></div>
+
+  <h3>4.2 向量化 embedding</h3>
+  <p>把一段文字丢给 embedding 模型，出来 768 个浮点数。语义相近的两段，向量在空间里也靠得近。就这样，别被「高维空间」吓到。</p>
+  <div class="card"><h4>这里有个高频误会</h4><p><code>embedding 模型</code> 和 <code>对话模型</code> 是两个东西。本机只装了前者（text2vec-base-chinese），所以<strong>能查不能答</strong>——像雇了个会找书的图书管理员，但没雇会写作文的人。</p></div>
+
+  <h3>4.3 入库与距离</h3>
+  <p>pgvector 给 PostgreSQL 加了一个类型 <code>vector(768)</code>，和一个算子 <code>&lt;=&gt;</code> 算余弦距离：</p>
+  <ul>
+    <li>返回 0 = 同向（语义几乎一样）</li>
+    <li>返回 1 = 垂直（不相关）</li>
+    <li>所以 <strong>1 − 距离 = 余弦相似度</strong>，越大越像</li>
+  </ul>
+
+  <h3>4.4 353 段为什么有 693 条向量</h3>
+  <p>MaxKB 会给每段<strong>自动生成几个「关联问题」</strong>，每个问题也单独存一条向量。这样问「报销怎么走」能对上原文「费用报销流程」。</p>
+  <div class="card bad"><h4>副作用（融合时会要命）</h4><p>同一段会在结果里占多个名次。做融合必须<strong>按段落去重</strong>，否则一段话能把 Top-5 全占满。</p></div>
+</section>
+
+<section id="s5">
+  <h2><span class="n">05</span>两路检索：它们各自瞎在哪</h2>
+  <div class="grid2">
+    <div class="card">
+      <h4>向量检索（语义路）</h4>
+      <p>问「报销上限多少钱」，能找到写着「费用额度不得超过 X 元」的段落——字面一个词都不一样，意思对上了。</p>
+      <p style="color:var(--bad)">瞎在：编号、型号、错误码。<code>EE-203</code> 在向量里几乎没有语义，会被「平均」成一团模糊。</p>
+    </div>
+    <div class="card">
+      <h4>全文检索（关键词路）</h4>
+      <p>PostgreSQL 自带：段落切成词（<code>tsvector</code>），查询切成词（<code>tsquery</code>），按词命中 + 词频 + 词距离打分（<code>ts_rank_cd</code>）。</p>
+      <p style="color:var(--bad)">瞎在：换个说法就找不到。问「报销」找不到写着「费用核销」的段落。</p>
+    </div>
+  </div>
+  <p><strong>两路的错误不重叠</strong>，所以合起来才稳。这就是混合检索存在的唯一理由——记住这一句，别的都是细节。</p>
+  <div class="card"><h4>标注集里的真实例子</h4><p>「打招呼第一句话怎么写」这道题：纯向量排第 <span class="num">12</span> 名，纯全文排第 <span class="num">3</span> 名。字面词对上了，语义没对上——这就是「两路互补」的现场证据。</p></div>
+</section>
+
+<section id="s6">
+  <h2><span class="n">06</span>原版 MaxKB 怎么合的</h2>
+  <p>文件在 <code>apps/knowledge/sql/blend_search.sql</code>，27 行。骨架：</p>
+  <pre class="code"><code><span class="hot">WITH vector_top AS (</span>
+    SELECT id, paragraph_id, (embedding::vector(%s) &lt;=&gt; %s) AS distance
+    FROM embedding ${embedding_query}          <span class="c">-- 带 knowledge_id 过滤的 WHERE</span>
+    ORDER BY (embedding::vector(%s) &lt;=&gt; %s)
+    LIMIT LEAST(%s * 10, 500)                  <span class="c">-- ← 病根：先砍到最多 500 条</span>
+<span class="hot">)</span>
+SELECT DISTINCT ON (paragraph_id) ...
+    (1 - distance + COALESCE(ts_rank_cd(search_vector,
+        websearch_to_tsquery('simple', %s), 32), 0)) AS comprehensive_score
+FROM vector_top JOIN embedding e ON e.id = vector_top.id
+ORDER BY paragraph_id, comprehensive_score DESC
+WHERE comprehensive_score &gt; %s
+ORDER BY comprehensive_score DESC
+LIMIT %s</code></pre>
+  <p>翻成人话：<strong>①</strong> 先向量找最像的 500 段 → <strong>②</strong> 在这 500 段里加关键词分 → <strong>③</strong> 相加排序取前 K。</p>
+
+  <h3>6.1 缺陷一：候选池是死的（真正的病根）</h3>
+  <p>关键词分<strong>只能给已经进了池子的段落加分</strong>。一段话字面完全命中、但语义不像（编号、型号），它根本不在那 500 条里，关键词再准也加不到分。这叫<em class="hl">召回上限被另一路锁死</em>。</p>
+  <div class="card good"><h4>旁证很硬</h4><p>池子从 50 放大到 500，命中率<strong>反而从 75% 掉到 41.7%</strong>。说明瓶颈不是「池子不够大」，而是「池子由谁决定」。</p></div>
+
+  <h3>6.2 缺陷二：两项直接相加，但量级不对等</h3>
+  <div class="card bad"><h4>先纠正一个常见错说法</h4><p>别说「全文分没有上界」。<code>ts_rank_cd(..., 32)</code> 里的 <strong>32 是归一化开关</strong>，输出 = rank/(rank+1)，<strong>恒小于 1</strong>。读过源码的人一听这句就知道你在背。</p></div>
+  <p>真相是：两项都在 [0,1)，但<strong>分布差一个量级</strong>——中文 embedding 的余弦普遍 0.8 以上，全文分多在 0.1 以下。所以 <code>0.85+0.05</code> 和 <code>0.93+0.00</code> 比，前者还是输。关键词项只够做同分微调，基本改不了排序。</p>
+  <pre class="code"><code><span class="c">-- 自己量一遍，这一步最能证明你真读过源码</span>
+SELECT round((1 - (embedding &lt;=&gt; (SELECT embedding FROM embedding LIMIT 1)))::numeric, 4)
+  FROM embedding LIMIT 5;
+<span class="c">-- 余弦一片 0.8~0.99</span>
+SELECT round(ts_rank_cd(search_vector, websearch_to_tsquery('simple','打招呼'), 32)::numeric, 4)
+  FROM embedding WHERE search_vector @@ websearch_to_tsquery('simple','打招呼') LIMIT 5;
+<span class="c">-- 全文分一片 0.0x~0.3</span></code></pre>
+</section>
+
+<section id="s7">
+  <h2><span class="n">07</span>你改成了什么：RRF 名次融合</h2>
+  <p><strong>Reciprocal Rank Fusion（倒数名次融合）</strong>，一句话：<em class="hl">不看分数，只看名次</em>。因为两路的分数根本不是一个尺子上的东西——一个是百分制，一个是五分制，别比分数，只比「他把他排第几」。</p>
+  <pre class="code"><code>score(文档) = Σ  1 / (k + rank)      k = 60，rank = 它在某一路里的名次（从 1 开始）</code></pre>
+
+  <h3>7.1 动手算一次（面试被问就讲这个）</h3>
+  <div class="calc">
+    <div class="grid">
+      <div><label>文档 A · 向量路名次（0 = 没命中）</label><input type="number" id="va" value="3" min="0" max="100"></div>
+      <div><label>文档 A · 全文路名次</label><input type="number" id="ka" value="7" min="0" max="100"></div>
+      <div><label>文档 B · 向量路名次</label><input type="number" id="vb" value="1" min="0" max="100"></div>
+      <div><label>文档 B · 全文路名次</label><input type="number" id="kb" value="0" min="0" max="100"></div>
+    </div>
+    <label style="margin-top:16px">k = <span id="kval" style="color:var(--accent);font-family:var(--mono)">60</span></label>
+    <input type="range" id="kk" min="10" max="120" value="60">
+    <div class="docline"><span>A 的分：<span class="s" id="sa">0.0308</span></span><span id="ia" style="color:var(--dim);font-size:12px"></span></div>
+    <div class="docline"><span>B 的分：<span class="s" id="sb">0.0164</span></span><span id="ib" style="color:var(--dim);font-size:12px"></span></div>
+    <div class="docline" style="border-top:1px solid #1c2938"><span id="who" style="color:var(--accent);font-weight:600"></span><span style="color:var(--dim);font-size:12px">默认值就是面试要讲的那组</span></div>
+  </div>
+  <p style="margin-top:14px">默认：A（向量 3 / 全文 7）、B（向量 1 / 未命中）。<strong>A 赢 B</strong>，尽管 B 在向量路排第一——因为 A <strong>被两路同时认可</strong>。这就是「投票」效果，也是 RRF 的全部意义。</p>
+
+  <h3>7.2 为什么用它（三条都是答辩素材）</h3>
+  <ol>
+    <li><strong>免疫量纲</strong>：只用名次，余弦和 ts_rank_cd 谁大谁小都无所谓。</li>
+    <li><strong>免调权重</strong>：<code>cos*0.7 + bm25*0.3</code> 这种权重得随语料重调，RRF 一个 k 通吃。</li>
+    <li><strong>k=60 的作用</strong>：压低头部绝对优势。k 越小第 1 名越霸，k 越大名次差异被抹平。实测 20 / 60 / 100 差异在 ±1.5 个点内。</li>
+  </ol>
+
+  <h3>7.3 关键发现：融合的「粒度」决定成败</h3>
+  <div class="bars">
+    <div class="bar-row"><span class="lbl">原版 blend（池内加全文分）</span><div class="bar-track"><div class="bar-fill" style="width:54.2%;background:#4a6274"></div></div><span class="v">54.2%</span></div>
+    <div class="bar-row"><span class="lbl">SQL 内按段落融合 RRF</span><div class="bar-track"><div class="bar-fill" style="width:50%;background:#cf6b5a"></div></div><span class="v">50.0%</span></div>
+    <div class="bar-row"><span class="lbl">SQL 内按文档聚合 RRF</span><div class="bar-track"><div class="bar-fill" style="width:37.5%;background:#a84a4a"></div></div><span class="v">37.5%</span></div>
+    <div class="bar-row"><span class="lbl">离线 · 按段落 id 融合 top-20</span><div class="bar-track"><div class="bar-fill" style="width:58.3%;background:#5a86a0"></div></div><span class="v">58.3%</span></div>
+    <div class="bar-row best"><span class="lbl">离线 · 按文档名次融合 top-20</span><div class="bar-track"><div class="bar-fill" style="width:83.3%;background:linear-gradient(90deg,#2f8f6a,#3ddc97)"></div></div><span class="v">83.3%</span></div>
+  </div>
+  <p>为什么「文档级」这么重要：一篇文档里有多个段落同时命中，<strong>段落级融合会被「这篇有多少段」带偏</strong>——段多就等于票多。按文档取「它在每路里最好的那个名次」，才是公平比较。</p>
+  <div class="card good"><h4>这是整份简历最硬的东西</h4><p>你不仅做到了 83.3%，还知道<strong>把它塞进 SQL 会掉到 50%</strong>，并且能解释为什么。会做的人不少，知道边界的人不多。</p></div>
+</section>
+
+<section id="s8">
+  <h2><span class="n">08</span>评测怎么做（没这个，83% 是空口）</h2>
+  <h3>8.1 标注集</h3>
+  <ul>
+    <li><strong>24 道域内题</strong>：每题人工标「标准答案在哪个文件」</li>
+    <li><strong>8 道域外题</strong>（「红烧肉怎么做」这种库里没有的）：测拒答</li>
+    <li>题面故意混了典型失败类型：编号型、专名型、口语转述型、跨文档综合型</li>
+  </ul>
+  <h3>8.2 协议（必须一次说清，否则数字会被质疑）</h3>
+  <div class="quote">每题各模式取 <code>top_number=20</code> → 按<strong>文档名</strong>去重 → 取前 5 篇 → <strong>标准答案所在文件出现在这 5 篇里就算命中</strong>。这就是「文档级 Top-5」。</div>
+  <div class="bars">
+    <div class="bar-row"><span class="lbl">纯向量</span><div class="bar-track"><div class="bar-fill" style="width:50%;background:#4a6274"></div></div><span class="v">50.0%</span></div>
+    <div class="bar-row"><span class="lbl">纯全文</span><div class="bar-track"><div class="bar-fill" style="width:50%;background:#4a6274"></div></div><span class="v">50.0%</span></div>
+    <div class="bar-row"><span class="lbl">原版混合 blend</span><div class="bar-track"><div class="bar-fill" style="width:54.2%;background:#6b8398"></div></div><span class="v">54.2%</span></div>
+    <div class="bar-row best"><span class="lbl">RRF 文档级融合</span><div class="bar-track"><div class="bar-fill" style="width:83.3%;background:linear-gradient(90deg,#2f8f6a,#3ddc97)"></div></div><span class="v">83.3%</span></div>
+  </div>
+  <p><strong>单路都只有 50%，融合才 83%</strong>——这句务必背下来，它是「混合检索有价值」的直接证据。</p>
+  <h3>8.3 稳健性（防止被说「调参调出来的」）</h3>
+  <table>
+    <tr><th>变体</th><th>Top-5</th></tr>
+    <tr><td>RRF，两路各取 Top-10</td><td class="num">75.0%</td></tr>
+    <tr><td>原版 blend，请求 top_number=5（池 50）</td><td class="num">75.0%</td></tr>
+    <tr><td>原版 blend，top_number=50（池 500）</td><td class="num">41.7%</td></tr>
+  </table>
+  <h3>8.4 拒答</h3>
+  <p>域外 8 题、阈值取余弦 <code>0.5</code>：<strong>7/8 正确拒答</strong>，域内 0 误拒。阈值怎么定的标准答法：<strong>在标注集上扫参数，取「域内多保留、域外多拒掉」的平衡点，落在 0.5。</strong></p>
+</section>
+
+<section id="s9">
+  <h2><span class="n">09</span>你踩过的六个坑（讲这些最像「真做过」）</h2>
+  <ol>
+    <li><strong>一条 SQL 换不掉</strong>：必须<strong>恰好 8 个 <code>%s</code></strong>，因为 Python 侧 BlendSearch.handle 固定按顺序传 8 个参数。多加一个 <code>LIMIT %s</code> 就报 <code>the query has 10 placeholders but 9 parameters were passed</code>。</li>
+    <li><strong>注释里的 <code>%</code> 也算占位符</strong>：首行写「-- % MaxKB …」，直接 <code>incomplete placeholder: '%'</code>。这坑只有真跑过才会遇到。</li>
+    <li><strong>段落去重</strong>：一段多向量，不去重会让同一段占满 Top-5。</li>
+    <li><strong>API 前缀是 <code>/admin/api/</code></strong>，不是 <code>/api/</code>；上传文档是两步（先 split 再 document），直接 POST 只建空壳。</li>
+    <li><strong>容器重建会丢改动</strong>：<code>docker cp</code> 进去改的 SQL，容器一重建就没了，得 bind mount。</li>
+    <li><strong>库里用户是 root</strong>，没有 postgres 角色，连库要 <code>-U root</code>。</li>
+  </ol>
+</section>
+
+<section id="s10">
+  <h2><span class="n">10</span>现在能做什么、不能做什么</h2>
+  <table>
+    <tr><th>能做</th><th>不能做</th></tr>
+    <tr><td>文档上传、切分、向量化</td><td><strong>对话问答</strong>（没接大模型，只有检索）</td></tr>
+    <tr><td>命中测试（向量 / 全文 / 混合三选一）</td><td>线上并发、多用户权限</td></tr>
+    <tr><td><code>/hit_test</code> API 程序化调用</td><td>融合逻辑打进 MaxKB 内部（目前在离线脚本）</td></tr>
+    <tr><td>24 题评测可复跑</td><td>Reranker 精排（没做）</td></tr>
+  </table>
+  <div class="card warn"><h4>说 83.3% 时必须带三个前提</h4><p>① 文档级 &nbsp;② 每路 top-20 &nbsp;③ 24 题自建标注集。少一个，这数字就是吹的。</p></div>
+</section>
+
+<section id="s11">
+  <h2><span class="n">11</span>术语卡（能用人话解释就够）</h2>
+  <input class="searchbox" id="gq" placeholder="输入关键词过滤，比如 embedding / 召回 / 拒答">
+  <div id="glist">
+    <div class="gterm"><b>RAG</b><span>先查资料再回答。开卷考试。防止模型瞎编。</span></div>
+    <div class="gterm"><b>检索 retrieval</b><span>从几千段里挑出最相关的五段。翻书找页码。</span></div>
+    <div class="gterm"><b>生成 generation</b><span>照着挑出来的几页写答案。本项目没接，所以只做检索。</span></div>
+    <div class="gterm"><b>幻觉</b><span>模型不知道却编一个听起来很像的答案。</span></div>
+    <div class="gterm"><b>微调 fine-tune</b><span>把文档「背」进模型脑子里。贵、慢、书一改就得重背。</span></div>
+    <div class="gterm"><b>prompt</b><span>喂给模型的那段话。RAG 里一般长这样：根据以下资料回答……资料：{检索到的段落}。</span></div>
+    <div class="gterm"><b>chunking 切分</b><span>把长文档切成能独立检索的小段。把一本书拆成一堆卡片。</span></div>
+    <div class="gterm"><b>段落 paragraph</b><span>切分后的最小单位，就是一张卡片。</span></div>
+    <div class="gterm"><b>embedding 向量化</b><span>把一句话变成一串数字。给每句话发一张语义身份证。</span></div>
+    <div class="gterm"><b>向量 vector</b><span>那串数字，这里是 768 个小数。</span></div>
+    <div class="gterm"><b>768 维</b><span>768 个数字组成的坐标，用来定位「这句话的意思在哪儿」。</span></div>
+    <div class="gterm"><b>embedding 模型</b><span>干「句子→数字」这件事的模型。只会发身份证，不会说话。</span></div>
+    <div class="gterm"><b>pgvector</b><span>给 PostgreSQL 装的插件，让它能存向量、算「像不像」。给档案柜加个按语义找的抽屉。</span></div>
+    <div class="gterm"><b>余弦相似度</b><span>越接近 1 越像。<code>1 − 距离</code> 就是它。</span></div>
+    <div class="gterm"><b>余弦距离</b><span>pgvector 的 <code>&lt;=&gt;</code> 返回的，越接近 0 越像。别跟相似度搞反。</span></div>
+    <div class="gterm"><b>全文检索</b><span>按字面命中找。Ctrl+F 的进化版。</span></div>
+    <div class="gterm"><b>分词</b><span>中文没空格，得先把句子切成词。「报销上限多少」→ 报销/上限/多少。</span></div>
+    <div class="gterm"><b>tsvector</b><span>PostgreSQL 把一段话拆成「词 + 位置」后存成的结构，就是这份词表索引。</span></div>
+    <div class="gterm"><b>tsquery</b><span>你的查询拆成的「词条件」。</span></div>
+    <div class="gterm"><b>ts_rank_cd</b><span>PostgreSQL 的全文打分函数。归一化后恒小于 1，输出量级很低。</span></div>
+    <div class="gterm"><b>归一化 32</b><span><code>ts_rank_cd(...,32)</code> 里的 32 是开关，含义是 rank/(rank+1)。别再说「无上界」。</span></div>
+    <div class="gterm"><b>BM25</b><span>全文打分的一种经典公式。MaxKB 没用它，用的是 ts_rank_cd，面试说「全文打分」最安全。</span></div>
+    <div class="gterm"><b>混合检索 hybrid</b><span>两路都跑，再把结果合并。</span></div>
+    <div class="gterm"><b>召回 recall</b><span>先把「可能相关」的一大堆捞上来。海选。</span></div>
+    <div class="gterm"><b>候选池</b><span>被捞上来的那批。池子外面的人再优秀也没机会。</span></div>
+    <div class="gterm"><b>Top-K</b><span>取前 K 名。只录前 5 名。</span></div>
+    <div class="gterm"><b>命中率 hit@5</b><span>24 道题里，答案所在那篇进了前 5 的有几道。</span></div>
+    <div class="gterm"><b>名次 rank</b><span>排第几。</span></div>
+    <div class="gterm"><b>RRF</b><span>只看名次、不看分数地合并多路。<code>Σ 1/(60+rank)</code>。两个面试官打分标准不同，那就别比分，只比他把谁排前面。</span></div>
+    <div class="gterm"><b>k = 60</b><span>RRF 分母里那个大数，压低头部霸权，防止某一路一家之言压倒一切。</span></div>
+    <div class="gterm"><b>融合粒度</b><span>按段落投票还是按文档投票。按段落投，长文档段多就等于票多，不公平。</span></div>
+    <div class="gterm"><b>去重</b><span>同一篇 / 同一段出现多次只算一次。一个人不能投三票。</span></div>
+    <div class="gterm"><b>阈值 threshold</b><span>低于这个分就不给答案。这里取余弦 0.5。</span></div>
+    <div class="gterm"><b>拒答</b><span>查不到就说查不到，别硬编。</span></div>
+    <div class="gterm"><b>Reranker 精排</b><span>捞上来之后再用更贵的模型重排一遍。本项目没做。</span></div>
+    <div class="gterm"><b>Docker</b><span>把软件和依赖打包成一个箱子跑。船不用管里面装什么。</span></div>
+    <div class="gterm"><b>镜像 / 容器</b><span>镜像 = 设计图；容器 = 按图跑起来的那只箱子。</span></div>
+    <div class="gterm"><b>bind mount</b><span>把本机目录挂进容器。改代码后容器重建不丢，全靠它。</span></div>
+    <div class="gterm"><b>SQL / CTE</b><span><code>WITH … AS (…)</code> 是先算一个临时结果再拿它继续查。先炒好配菜再下锅。</span></div>
+    <div class="gterm"><b>占位符 %s</b><span>SQL 里留的坑，等程序填值。坑的数量必须和填的数一样多，多一个就报错。</span></div>
+    <div class="gterm"><b>API / Bearer</b><span>程序之间递材料的窗口。Bearer token 是工牌，进门要刷，不能报名字。</span></div>
+  </div>
+</section>
+
+<section id="s12">
+  <h2><span class="n">12</span>60 秒完整讲述（背下来，面试第一问就用）</h2>
+  <pre class="code" id="pitch"><code>这个项目基于 MaxKB 做文档知识库问答，我改的是检索层。
+它的混合检索先把候选池砍到向量 Top-500，再在池子里把余弦相似度和全文分相加。
+这有两个问题：一是纯字面命中（编号、型号）根本进不了池子；
+二是两项分数量级差一个档，相加基本等于只看向量。
+
+我做了两件事：两路各自独立召回；用 RRF 按名次融合，
+在文档维度取每篇的最好名次再合并。
+
+评测是我自己标的 24 道题加 8 道域外题。原版混合检索文档级 Top-5 是 54.2%，
+改完是 83.3%，而纯向量和纯全文各只有 50%。
+
+我也试过直接把 RRF 写进那条 SQL，结果段落级只有 50%、按文档聚合只有 37.5%，
+比原版还低——所以瓶颈在候选池和融合粒度，不在公式。域外 8 题拒答 7 题。</code></pre>
+  <div class="card bad"><h4>三句不能说</h4><p>① 准确率 90% &nbsp; ② 线上 QPS &nbsp; ③ 我改造了 MaxKB 源码（改说「复现它的检索逻辑做对照」）</p></div>
+</section>
+
+<section id="s13">
+  <h2><span class="n">13</span>自检题（答不上就回去重读）</h2>
+  <details><summary>1. 为什么需要 RAG，而不是微调？</summary><div class="body">微调把文档烧进权重：贵、慢、文档一改就得重训，还容易把模型教傻。RAG 文档不动、回答时现场查，便宜、随时能改、能给出处。而且 RAG 给了「检索」这个可量化、可优化的环节——正是我做的部分。</div></details>
+  <details><summary>2. 一段话为什么会有 3 条向量记录？带来什么坑？</summary><div class="body">MaxKB 给每段自动生成几个「关联问题」，正文一条 + 问题各一条。坑是同一段会占多个名次，融合时必须按段落去重，否则一段话能把 Top-5 占满。</div></details>
+  <details><summary>3. 向量检索在什么地方一定瞎？举一个你标注集里的例子。</summary><div class="body">编号、型号、错误码、函数名这类「字面才有意义」的东西。<code>EE-203</code> 在向量空间里被平均成一团模糊。标注集里「打招呼第一句话怎么写」：向量排第 12，全文排第 3。</div></details>
+  <details><summary>4. 原版 SQL 里 LIMIT LEAST(%s*10, 500) 为什么是病根？</summary><div class="body">候选池完全由向量一路决定。字面命中但语义不像的段落根本进不了池，关键词分加不上去——召回上限被另一路锁死。旁证：池子 50→500，命中率反而 75%→41.7%，说明瓶颈不是容量而是「由谁决定池子」。</div></details>
+  <details><summary>5. ts_rank_cd(..., 32) 里的 32 是什么？取值范围多少？</summary><div class="body">归一化开关，输出 = rank/(rank+1)，恒小于 1。所以「全文分无上界」是错的。真实问题是它和余弦差一个量级：余弦普遍 0.8+，全文分多在 0.1 以下，相加等于只看向量。</div></details>
+  <details><summary>6. 手算：A（向量 3 / 全文 7）和 B（向量 1 / 未命中），谁在前？</summary><div class="body">A = 1/63 + 1/67 = 0.0308；B = 1/61 = 0.0164。A 在前。因为 A 被两路同时认可，这就是 RRF 的投票效果。</div></details>
+  <details><summary>7. 为什么按段落融合会输给按文档融合？</summary><div class="body">一篇长文档切出 30 段，全在前 20 名里就等于投了 30 票，融合被「这篇有多少段」带偏。按文档取每篇的最好名次才公平。实测：段落级 50.0%，文档级 83.3%。</div></details>
+  <details><summary>8. 「文档级 Top-5 = 83.3%」里「文档级」和「top-20」各约束了什么？</summary><div class="body">文档级 = 按文档名去重后取前 5 篇，答案文件在这 5 篇里就算命中（不是段落级）。top-20 = 每一路只取前 20 条进融合，是融合协议的一部分，不是全量数据。换成段落级或换取数，数字都会变。</div></details>
+  <details><summary>9. 池子从 50 放到 500，命中率为什么反而掉？</summary><div class="body">因为排序被向量项支配，池子越大越退化成纯向量排序（纯向量本库 50%），而全文那点加分被稀释。实测 blend 池 50 = 75%，池 500 = 41.7%。更细的消融我没做——这句可以老实承认。</div></details>
+  <details><summary>10. 面试官说「你这是不是调参调出来的」，拿哪三行数据回他？</summary><div class="body">① RRF 两路各取 Top-10 仍有 75.0%；② 原版 blend 在池 50 时也有 75.0%（说明基数本身就有这么高）；③ k 取 20/60/100 差异在 ±1.5 个点内。参数不敏感，提升来自「候选池独立 + 文档级融合」这两个结构性改动。</div></details>
+  <div class="card" style="margin-top:26px"><h4>读完的下一步</h4><p>把这一页从上往下读一遍，然后关掉它，对着空气讲 60 秒。讲不顺的那一段，就是你面试会卡的地方。</p></div>
+</section>
+
+<div class="footer">RAG 混合检索 · 从零讲透 &nbsp;|&nbsp; 数据来自本机 MaxKB v2.10.8 实测，24 题标注集可复跑 &nbsp;|&nbsp; 生成于 2026-11-15</div>
+</main>
+
+<script>
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll('aside a'));
+  var secs = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+  function onScroll(){
+    var y = window.scrollY + 140, idx = 0;
+    for (var i=0;i<secs.length;i++){ if (secs[i] && secs[i].offsetTop <= y) idx = i; }
+    links.forEach(function(a,i){ a.classList.toggle('on', i===idx); });
+    var h = document.documentElement;
+    var p = h.scrollTop / (h.scrollHeight - h.clientHeight) * 100;
+    document.getElementById('progress').style.width = (p||0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  // RRF calculator
+  var va=document.getElementById('va'), ka=document.getElementById('ka'),
+      vb=document.getElementById('vb'), kb=document.getElementById('kb'),
+      kk=document.getElementById('kk');
+  function f(x){ return x.toFixed(4); }
+  function cmp(){
+    var k = parseInt(kk.value,10);
+    document.getElementById('kval').textContent = k;
+    var a1 = parseFloat(va.value)||0, a2 = parseFloat(ka.value)||0;
+    var b1 = parseFloat(vb.value)||0, b2 = parseFloat(kb.value)||0;
+    var sa = (a1>0?1/(k+a1):0) + (a2>0?1/(k+a2):0);
+    var sb = (b1>0?1/(k+b1):0) + (b2>0?1/(k+b2):0);
+    document.getElementById('sa').textContent = f(sa);
+    document.getElementById('sb').textContent = f(sb);
+    document.getElementById('ia').textContent = (a1>0?'1/'+(k+a1):'未命中') + ' + ' + (a2>0?'1/'+(k+a2):'未命中');
+    document.getElementById('ib').textContent = (b1>0?'1/'+(k+b1):'未命中') + ' + ' + (b2>0?'1/'+(k+b2):'未命中');
+    var w = document.getElementById('who');
+    if (Math.abs(sa-sb) < 1e-9) { w.textContent = '打平'; }
+    else { w.textContent = (sa>sb?'A':'B') + ' 排在前面 —— 差 ' + f(Math.abs(sa-sb)); }
+  }
+  [va,ka,vb,kb,kk].forEach(function(el){ el.addEventListener('input', cmp); });
+  cmp();
+
+  // glossary filter
+  var gq = document.getElementById('gq');
+  gq.addEventListener('input', function(){
+    var q = gq.value.trim().toLowerCase();
+    var rows = document.querySelectorAll('#glist .gterm');
+    for (var i=0;i<rows.length;i++){
+      var t = rows[i].textContent.toLowerCase();
+      rows[i].style.display = (!q || t.indexOf(q) > -1) ? '' : 'none';
+    }
+  });
+
+  // copy buttons
+  document.querySelectorAll('pre.code').forEach(function(pre){
+    var btn = document.createElement('button');
+    btn.className = 'copy'; btn.textContent = '复制';
+    btn.addEventListener('click', function(){
+      var txt = pre.innerText.replace(/^复制\s*/,'');
+      var done = function(){ btn.textContent='已复制'; setTimeout(function(){ btn.textContent='复制'; },1200); };
+      var fb = function(){
+        var ta = document.createElement('textarea');
+        ta.value = txt; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); done(); } catch(e){ btn.textContent='请手动选择'; }
+        document.body.removeChild(ta);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(done, fb);
+      } else { fb(); }
+    });
+    pre.appendChild(btn);
+  });
+})();
+</script>
+</body>
+</html>

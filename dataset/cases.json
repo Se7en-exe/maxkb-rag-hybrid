@@ -1,0 +1,111 @@
+{
+  "protocol": "top_number=20 -> dedupe by document_name -> first 5; hit if expected file in those 5",
+  "in_domain": [
+    {
+      "question": "MaxKB 二次开发一周怎么排期",
+      "expected_file": "开源项目二次开发指南.md"
+    },
+    {
+      "question": "WeKnora 适不适合当简历项目",
+      "expected_file": "WeKnora体量评估.md"
+    },
+    {
+      "question": "代码检索工作台最小可讲版要几天",
+      "expected_file": "项目_代码检索工作台_开发清单.md"
+    },
+    {
+      "question": "打招呼第一句话怎么写",
+      "expected_file": "投递执行手册_打招呼与转化率.md"
+    },
+    {
+      "question": "广州有哪些 AI 应用开发岗位",
+      "expected_file": "BOSS直聘岗位清单_广州深圳.md"
+    },
+    {
+      "question": "AI 时代简历必须加哪三样东西",
+      "expected_file": "AI时代版说明.md"
+    },
+    {
+      "question": "简历优化服务值不值得买",
+      "expected_file": "简历优化服务值不值.md"
+    },
+    {
+      "question": "卓望的定向简历有什么要求",
+      "expected_file": "卓望_定向简历说明.md"
+    },
+    {
+      "question": "校园二手交易平台三周怎么排",
+      "expected_file": "项目二_3周开发清单.md"
+    },
+    {
+      "question": "网上真实的优秀简历长什么样",
+      "expected_file": "优秀简历参考_网上真实样本.md"
+    },
+    {
+      "question": "简历参考包里有哪些材料",
+      "expected_file": "简历参考包.md"
+    },
+    {
+      "question": "AI 提示词能卖哪些场景",
+      "expected_file": "AI提示词实战库-21个场景.docx"
+    },
+    {
+      "question": "上架文案怎么写",
+      "expected_file": "上架文案.md"
+    },
+    {
+      "question": "四类指标的口径怎么定义",
+      "expected_file": "AI时代版说明.md"
+    },
+    {
+      "question": "三个开源方向分别选哪个项目",
+      "expected_file": "开源项目二次开发指南.md"
+    },
+    {
+      "question": "改了别人的代码怎么证明是我改的",
+      "expected_file": "开源项目二次开发指南.md"
+    },
+    {
+      "question": "项目二推荐用什么技术栈",
+      "expected_file": "开源项目二次开发指南.md"
+    },
+    {
+      "question": "简历上哪些项目会被认为烂大街",
+      "expected_file": "开源项目二次开发指南.md"
+    },
+    {
+      "question": "测试开发岗位的 JD 要求是什么",
+      "expected_file": "BOSS直聘岗位清单_广州深圳.md"
+    },
+    {
+      "question": "RAG 项目要准备多少条评测问题",
+      "expected_file": "开源项目二次开发指南.md"
+    },
+    {
+      "question": "简历里的百分比指标怎么定才可信",
+      "expected_file": "AI时代版说明.md"
+    },
+    {
+      "question": "投递转化率低是什么原因",
+      "expected_file": "投递执行手册_打招呼与转化率.md"
+    },
+    {
+      "question": "三条改造方向里哪条最适合一周做完",
+      "expected_file": "开源项目二次开发指南.md"
+    },
+    {
+      "question": "全栈版简历里专业技能写了什么",
+      "expected_file": "个人简历_全栈版.docx"
+    }
+  ],
+  "off_domain": [
+    "今天天气怎么样 红烧肉做法",
+    "写一首关于春天的诗",
+    "推荐几部好看的电影",
+    "怎么用 Photoshop 修图",
+    "考研数学怎么复习",
+    "如何申请信用卡",
+    "NBA 总决赛谁赢了",
+    "怎么练出马甲线"
+  ]
+}

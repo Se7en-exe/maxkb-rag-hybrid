@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+eval/maxkb_results.local.json
+*.log
+my-docs/
+.DS_Store
